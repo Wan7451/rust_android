@@ -12,11 +12,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        Toast.makeText(this, FFICenter.callRustCode(), Toast.LENGTH_LONG).show()
+        Toast.makeText(this, FFICenter.callRustCode("aaaaa"), Toast.LENGTH_LONG).show()
 
 
-        FFICenter.logInit()
-
-        finish()
+       // FFICenter.logInit()
     }
 }
