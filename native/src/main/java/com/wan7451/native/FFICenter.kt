@@ -8,6 +8,11 @@ object FFICenter {
 
     external fun callRustCode(str: String): String
 
+    external fun initHttpClient(baseUrl: String, commonHeader: String): String
+
+    external fun sendRequest(baseUrl: String, path: String, params: String): String
+
+
     external fun logInit()
 
     init {
