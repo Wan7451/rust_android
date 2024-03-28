@@ -2,35 +2,58 @@ use std::fmt::{Display, Formatter};
 use std::sync::Arc;
 use dashmap::DashMap;
 use once_cell::sync::OnceCell;
+use reqwest::header::{HeaderMap, HeaderName, HeaderValue, IntoHeaderName};
 
 use serde_json::Value;
+use tokio::runtime::Runtime;
 
 use crate::module::error::Error;
 
-
-const BASE_URL: &str = "";
 static CLIENTS: OnceCell<Arc<DashMap<String, Arc<HttpClient>>>> = OnceCell::new();
+static RUNTIME: OnceCell<Runtime> = OnceCell::new();
 
-pub fn get_client(base_url: &str) -> Result<HttpClient, Error> {
+
+pub fn init(base_url: &str, common_header: &str) -> Result<(), Error> {
     let clients = CLIENTS.get_or_init(|| {
         Arc::new(DashMap::new())
     });
-    let client_arc = clients.get(base_url);
-    if let Some(client) = client_arc {
-        if let Some(client) = *client.value() {
-            return Ok(client.clone());
+    let client = HttpClient::new(base_url, common_header)?;
+    clients.insert(base_url.to_string(), Arc::new(client));
+    Ok(())
+}
+
+pub fn get_client(base_url: &str) -> Result<Arc<HttpClient>, Error> {
+    let clients = CLIENTS.get_or_init(|| {
+        Arc::new(DashMap::new())
+    });
+    let client = match clients.get(base_url) {
+        Some(item) => item.clone(),
+        None => {
+            let client = HttpClient::new(base_url, "{}")?;
+            let client = Arc::new(client);
+            clients.insert(base_url.to_string(), client.clone());
+            client.clone()
         }
-    }
-    let client = HttpClient::new(base_url, "{}")?;
-    clients.insert(base_url.to_string(), client.clone());
+    };
     Ok(client)
 }
 
+pub fn get_runtime() -> &'static Runtime {
+    RUNTIME.get_or_init(|| {
+        tokio::runtime::Builder::new_multi_thread()
+            .worker_threads(4)
+            .enable_all()
+            .build()
+            .unwrap()
+    })
+}
 
+
+#[derive(Clone)]
 pub struct HttpClient {
-    client: reqwest::Client,
-    headers: CommonHeader,
-    base_url: String,
+    pub client: reqwest::Client,
+    pub headers: CommonHeader,
+    pub base_url: String,
 }
 
 impl HttpClient {
@@ -38,7 +61,6 @@ impl HttpClient {
         let client = reqwest::Client::builder()
             .timeout(std::time::Duration::from_secs(10)).build()?;
         let headers = CommonHeader::new(common_header)?;
-
         Ok(HttpClient {
             client,
             headers,
@@ -56,6 +78,7 @@ impl Display for HttpClient {
 
 pub type KV = (String, String);
 
+#[derive(Clone)]
 pub struct CommonHeader {
     params: Vec<KV>,
 }
@@ -70,6 +93,16 @@ impl CommonHeader {
             }
         }
         Ok(CommonHeader { params })
+    }
+}
+
+impl Into<HeaderMap> for CommonHeader {
+    fn into(self) -> HeaderMap {
+        let mut headers = HeaderMap::new();
+        /*for (k, v) in self.params {
+            headers.insert(HeaderName::from_static(&k), HeaderValue::from_static(&v));
+        }*/
+        headers
     }
 }
 
