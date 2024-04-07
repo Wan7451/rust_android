@@ -5,12 +5,13 @@ buildscript {
         google()
         mavenCentral()
         maven("https://plugins.gradle.org/m2/")
+        mavenLocal()
     }
 
     dependencies {
         classpath("com.android.tools.build:gradle:7.2.2")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
-        classpath("io.github.MatrixDev.android-rust:plugin:0.3.2")
+        classpath("io.github.MatrixDev.android-rust:plugin:0.3.21")
     }
 }
 
@@ -19,6 +20,7 @@ allprojects {
         google()
         mavenCentral()
         maven("https://plugins.gradle.org/m2/")
+        mavenLocal()
     }
 }
 
