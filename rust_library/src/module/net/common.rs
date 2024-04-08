@@ -2,7 +2,7 @@ use std::fmt::{Display, Formatter};
 use std::sync::Arc;
 use dashmap::DashMap;
 use once_cell::sync::OnceCell;
-use reqwest::header::{HeaderMap, HeaderName, HeaderValue, IntoHeaderName};
+use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 
 use serde_json::Value;
 use tokio::runtime::Runtime;
@@ -58,9 +58,12 @@ pub struct HttpClient {
 
 impl HttpClient {
     pub fn new(base_url: &str, common_header: &str) -> Result<Self, Error> {
-        let client = reqwest::Client::builder()
-            .timeout(std::time::Duration::from_secs(10)).build()?;
         let headers = CommonHeader::new(common_header)?;
+        let client = reqwest::Client::builder()
+            .gzip(true)
+            .connect_timeout(std::time::Duration::from_secs(30))
+            .timeout(std::time::Duration::from_secs(30))
+            .build()?;
         Ok(HttpClient {
             client,
             headers,
@@ -99,9 +102,17 @@ impl CommonHeader {
 impl Into<HeaderMap> for CommonHeader {
     fn into(self) -> HeaderMap {
         let mut headers = HeaderMap::new();
-        /*for (k, v) in self.params {
-            headers.insert(HeaderName::from_static(&k), HeaderValue::from_static(&v));
-        }*/
+        for (k, v) in self.params {
+            let k: HeaderName = match k.parse() {
+                Ok(k) => k,
+                Err(_) => continue,
+            };
+            let v: HeaderValue = match v.parse() {
+                Ok(v) => v,
+                Err(_) => continue,
+            };
+            headers.insert(k, v);
+        }
         headers
     }
 }

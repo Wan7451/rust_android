@@ -1,12 +1,10 @@
 use std::collections::HashMap;
-use std::hash::Hash;
-use std::path::PathBuf;
+use log::{error, Level};
+
 use serde_json::Value;
 
-use tokio::runtime::Runtime;
-
+use crate::module::{get_client, get_runtime, LastNode, LoggingInterceptor, Task};
 use crate::module::error::Error;
-use crate::module::{get_client, get_runtime};
 
 pub enum RequestType {
     Get,
@@ -77,7 +75,7 @@ impl RequestBuilder {
         request.run(callback);
         Ok(String::from(""))
     }
-    pub fn build(self) -> Request {
+    fn build(self) -> Request {
         Request {
             base_url: self.base_url,
             params: self.params,
@@ -102,10 +100,17 @@ impl Request {
 
         let result: String = match &self.request_type {
             RequestType::Get => {
-                client.client.get(path).send().await?.text().await?
+                let request = client.client.get(path).headers(headers);
+                let mut task = Task::new();
+                task.add_chain(LoggingInterceptor::new(Level::Error));
+                task.add_chain(LastNode);
+                let response = task.run(request).await.await?;
+                response.body()
             }
             RequestType::Post => {
-                client.client.post(path).headers(headers).send().await?.text().await?
+                let request = client.client.post(path).headers(headers);
+                error!("{:?}", request);
+                request.send().await?.text().await?
             }
             _ => {
                 String::from("")
@@ -114,50 +119,3 @@ impl Request {
         Ok(result)
     }
 }
-
-pub async fn get_request() -> Result<String, reqwest::Error> {
-    let mut map = HashMap::new();
-    map.insert("lang", "rust");
-    map.insert("body", "json");
-
-    let client = reqwest::Client::new();
-    let res = client.post("http://httpbin.org/post")
-        //.json(&map)
-        .send()
-        .await?.text().await;
-    println!("{res:#?}");
-    res
-}
-
-
-pub fn test_request<F>(cd: F) where F: FnOnce(String) {
-   let runtime = tokio::runtime::Builder::new_multi_thread()
-        .worker_threads(4)
-        .enable_all()
-        .build()
-        .unwrap();
-    runtime.block_on(async {
-        let a = aaaaaaa().await;
-        match a {
-            Ok(a) => {
-                //cd(a.clone());
-                //println!("{a}");
-            }
-            Err(e) => {
-                //cd(e.to_string());
-                println!("{e}");
-            }
-        }
-    })
-}
-
-async fn aaaaaaa() -> Result<(), Box<dyn std::error::Error>> {
-    let resp = reqwest::get("https://httpbin.org/ip")
-        .await?
-        .json::<HashMap<String, String>>()
-        .await?;
-    println!("{resp:#?}");
-    Ok(())
-}
-
-

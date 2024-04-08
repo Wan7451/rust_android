@@ -1,6 +1,8 @@
 use std::fmt::{Debug, Display, Formatter};
 
 
+pub type Result<T> = std::result::Result<T, Error>;
+
 /// 不同类型的错误可以通过组合使用
 /// std::error::Error 和 std::convert::From / std::convert::Into 特质来转换为一个统一的错误类型。
 pub enum Error {
@@ -33,7 +35,6 @@ impl Display for Error {
             Error::CustomError(e) => write!(f, "{}", e),
             Error::SerdeError(e) => write!(f, "{}", e),
             Error::HttpError(e) => write!(f, "{}", e),
-            _ => write!(f, "unknown error"),
         }
     }
 }

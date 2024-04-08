@@ -53,3 +53,8 @@ once_cell = "1.19.0" # 单例
 #[target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.13.3"
 log = "0.4.20" # android 日志库
+
+async-trait = "0.1.79" # 异步trait
+futures = "0.3" # 异步库
+futures-core = "0.3" # 异步库
+futures-util = "0.3" # 异步库

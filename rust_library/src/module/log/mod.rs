@@ -1,1 +1,4 @@
-pub mod logs;
+mod logs;
+
+
+pub use logs::*;
