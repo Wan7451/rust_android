@@ -1,9 +1,10 @@
+pub use log::*;
+pub use net::*;
+pub use task::*;
+
 mod net;
 mod log;
-mod error;
+pub(crate) mod error;
 
 mod task;
 
-pub use net::*;
-pub use log::*;
-pub use task::*;

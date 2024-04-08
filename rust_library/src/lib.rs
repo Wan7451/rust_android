@@ -1,10 +1,11 @@
 use jni::JNIEnv;
 use jni::objects::{JClass, JString};
-use jni::sys::jstring;
 
+use crate::ffi::JNI_PROXY;
 use crate::module::{init, init_once, RequestBuilder};
 
 mod module;
+mod ffi;
 
 #[macro_export]
 macro_rules! get_jstring {
@@ -26,71 +27,63 @@ macro_rules! get_jstring {
     };
 }
 #[no_mangle]
-extern "C" fn Java_com_wan7451_native_FFICenter_initHttpClient(mut env: JNIEnv, _: JClass, base_url: JString, common_header: JString) -> jstring {
+extern "C" fn Java_com_wan7451_native_FFICenter_initHttpClient(mut env: JNIEnv, _: JClass, base_url: JString, common_header: JString) {
     let base_url = match get_jstring!(env; base_url) {
         Ok(base_url) => base_url,
-
         Err(e) => {
-            return env.new_string(format!("init error:{}", e)).unwrap().into_raw();
+            env.throw(format!("init error:{}", e)).unwrap();
+            return;
         }
     };
     let common_header = match get_jstring!(env; common_header) {
         Ok(common_header) => common_header,
-
         Err(e) => {
-            return env.new_string(format!("init error:{}", e)).unwrap().into_raw();
+            env.throw(format!("init error:{}", e)).unwrap();
+            return;
         }
     };
-    match init(&base_url, &common_header) {
-        Ok(_) => {
-            env.new_string("init success").unwrap().into_raw()
-        }
-        Err(e) => {
-            env.new_string(format!("init error:{}", e)).unwrap().into_raw()
-        }
+    if let Err(e) = init(&base_url, &common_header) {
+        env.throw(format!("init error:{}", e)).unwrap();
     }
 }
 
 #[no_mangle]
-extern "C" fn Java_com_wan7451_native_FFICenter_sendRequest(mut env: JNIEnv, _: JClass, base_url: JString, path: JString, params: JString) -> jstring {
+extern "C" fn Java_com_wan7451_native_FFICenter_sendRequest(mut env: JNIEnv, _: JClass, base_url: JString, path: JString, params: JString) {
     let base_url = match get_jstring!(env; base_url) {
         Ok(base_url) => base_url,
-
         Err(e) => {
-            return env.new_string(format!("init error:{}", e)).unwrap().into_raw();
+            env.throw(format!("init error:{}", e)).unwrap();
+            return;
         }
     };
     let path = match get_jstring!(env; path) {
         Ok(path) => path,
-
         Err(e) => {
-            return env.new_string(format!("init error:{}", e)).unwrap().into_raw();
+            env.throw(format!("init error:{}", e)).unwrap();
+            return;
         }
     };
     let params = match get_jstring!(env; params) {
         Ok(common_header) => common_header,
 
         Err(e) => {
-            return env.new_string(format!("init error:{}", e)).unwrap().into_raw();
+            env.throw(format!("init error:{}", e)).unwrap();
+            return;
         }
     };
 
     let result = RequestBuilder::new(&base_url).path(&path).params(&params).get(|result| {
         match result {
             Ok(result) => {
+                let cb = JNI_PROXY.get().unwrap();
+                cb.invoke(result.as_bytes()).unwrap();
             }
-            Err(e) => {
-            }
+            Err(e) => {}
         }
     });
 
-    match result {
-        Ok(result) => {
-            env.new_string(format!("success:{}", result)).unwrap().into_raw()
-        }
-        Err(e) => {
-            env.new_string(format!("init error:{}", e)).unwrap().into_raw()
-        }
+    if let Err(e) = result {
+        env.throw(format!("init error:{}", e)).unwrap();
     }
 }
 
@@ -118,10 +111,8 @@ mod test {
         let result = init(base_url, header.to_string().as_str());
         let result = RequestBuilder::new(base_url).path(path).params(params).get(|result| {
             match result {
-                Ok(result) => {
-                }
-                Err(e) => {
-                }
+                Ok(result) => {}
+                Err(e) => {}
             }
         });
     }

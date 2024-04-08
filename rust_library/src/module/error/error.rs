@@ -1,6 +1,5 @@
 use std::fmt::{Debug, Display, Formatter};
 
-
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// 不同类型的错误可以通过组合使用
@@ -9,6 +8,7 @@ pub enum Error {
     CustomError(String),
     SerdeError(serde_json::Error),
     HttpError(reqwest::Error),
+    JniError(jni::errors::Error),
 }
 
 impl From<serde_json::Error> for Error {
@@ -20,6 +20,12 @@ impl From<serde_json::Error> for Error {
 impl From<reqwest::Error> for Error {
     fn from(value: reqwest::Error) -> Self {
         Error::HttpError(value)
+    }
+}
+
+impl From<jni::errors::Error> for Error {
+    fn from(value: jni::errors::Error) -> Self {
+        Error::JniError(value)
     }
 }
 
@@ -35,6 +41,7 @@ impl Display for Error {
             Error::CustomError(e) => write!(f, "{}", e),
             Error::SerdeError(e) => write!(f, "{}", e),
             Error::HttpError(e) => write!(f, "{}", e),
+            Error::JniError(e) => write!(f, "{}", e),
         }
     }
 }
@@ -45,6 +52,7 @@ impl std::error::Error for Error {
             Error::CustomError(_) => None,
             Error::SerdeError(e) => Some(e),
             Error::HttpError(e) => Some(e),
+            Error::JniError(e) => Some(e),
         }
     }
 }

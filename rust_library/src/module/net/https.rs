@@ -1,11 +1,11 @@
 use std::collections::HashMap;
-use log::{error, Level};
 
 use serde_json::Value;
 
-use crate::module::{get_client, get_runtime, LastNode, LoggingInterceptor, Task};
+use crate::module::{get_runtime, Task};
 use crate::module::error::Error;
 
+#[derive(Copy, Clone)]
 pub enum RequestType {
     Get,
     Post,
@@ -17,7 +17,7 @@ pub enum RequestType {
     Trace,
 }
 
-struct Request {
+pub struct Request {
     base_url: String,
     params: HashMap<String, String>,
     headers: HashMap<String, String>,
@@ -94,28 +94,20 @@ impl Request {
         });
     }
     async fn action(&self) -> Result<String, Error> {
-        let path = format!("{}{}", self.base_url, self.path);
-        let client = get_client(&self.base_url)?;
-        let headers = client.headers.clone().into();
-
-        let result: String = match &self.request_type {
-            RequestType::Get => {
-                let request = client.client.get(path).headers(headers);
-                let mut task = Task::new();
-                task.add_chain(LoggingInterceptor::new(Level::Error));
-                task.add_chain(LastNode);
-                let response = task.run(request).await.await?;
-                response.body()
-            }
-            RequestType::Post => {
-                let request = client.client.post(path).headers(headers);
-                error!("{:?}", request);
-                request.send().await?.text().await?
-            }
-            _ => {
-                String::from("")
-            }
-        };
+        let response = Task::new(self).run().await.await?;
+        let result = response.body();
         Ok(result)
+    }
+
+    pub fn url(&self) -> String {
+        format!("{}{}", self.base_url, self.path)
+    }
+
+    pub fn base_url(&self) -> String {
+        self.base_url.clone()
+    }
+
+    pub fn request_type(&self) -> RequestType {
+        self.request_type.clone()
     }
 }
