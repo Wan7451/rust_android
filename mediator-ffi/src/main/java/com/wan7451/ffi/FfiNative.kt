@@ -1,4 +1,4 @@
-package com.wan7451.native
+package com.wan7451.ffi
 
 import android.util.Log
 import androidx.annotation.Keep
@@ -17,7 +17,7 @@ import androidx.annotation.Keep
  */
 
 @Keep
-object FFICenter {
+internal object FFICenter {
 
     external fun initLog()
 
@@ -28,27 +28,7 @@ object FFICenter {
     external fun sendRequest(baseUrl: String, path: String, params: String)
 
     @Throws(Throwable::class)
-    external fun registerMessageHandler(handler: Any)
-
-    init {
-        System.loadLibrary("megazord")
-    }
-
-    //声明静态方法 方法名字 test
-    @JvmStatic
-    fun logTest(srt: String) {
-        Log.e("wwwww", srt)
-    }
-}
-
-class StringMessageHandler : BridgeMessageHandler {
-    override fun handleMessage(message: ByteArray) {
-        val str = String(message)
-        Log.e("StringMessageHandler", str)
-    }
+    external fun registerMessageHandler(handler: BridgeMessageHandler)
 
 }
 
-interface BridgeMessageHandler {
-    fun handleMessage(message: ByteArray)
-}

@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.wan7451.anative"
+    namespace = "com.wan7451.ffi"
     compileSdk = 33
     ndkVersion = "25.2.9519653"
 

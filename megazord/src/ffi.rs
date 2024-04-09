@@ -9,7 +9,7 @@ pub(crate) static JNI_PROXY: OnceLock<JniProxy> = OnceLock::new();
 
 
 #[no_mangle]
-extern "C" fn Java_com_wan7451_native_FFICenter_registerMessageHandler(mut env: JNIEnv, _: JClass, callback: JObject) {
+extern "C" fn Java_com_wan7451_ffi_FFICenter_registerMessageHandler(mut env: JNIEnv, _: JClass, callback: JObject) {
     JNI_PROXY.get_or_init(|| {
         let jvm = env.get_java_vm().unwrap();
         let global = env.new_global_ref(callback).unwrap();

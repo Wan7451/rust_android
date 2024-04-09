@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.wan7451.rust_android"
+    namespace = "com.wan7451.rust"
     compileSdk = 33
 
     defaultConfig {
-        applicationId = "com.wan7451.rust_android"
+        applicationId = "com.wan7451.rust"
         minSdk = 24
         targetSdk = 33
         versionCode = 1
