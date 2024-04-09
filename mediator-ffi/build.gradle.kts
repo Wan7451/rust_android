@@ -41,7 +41,7 @@ dependencies {
 
 androidRust {
     module("library") {
-        path = file("../rust_library")
+        path = file("../megazord")
 
         buildType("release") {
             runTests = true

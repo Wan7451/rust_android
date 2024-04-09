@@ -1,6 +1,7 @@
 package com.wan7451.native
 
 import android.util.Log
+import androidx.annotation.Keep
 
 /**
  * 外部函数接口 Foreign Function Interface: FFI 是 "Foreign Function Interface" 的缩写，
@@ -14,6 +15,8 @@ import android.util.Log
  * 内存管理：处理不同语言的内存管理模型差异，如垃圾回收与手动内存分配的协调。
  * 错误处理：确保跨语言调用中的异常或错误状态能够被正确捕获和处理。
  */
+
+@Keep
 object FFICenter {
 
     external fun initLog()
@@ -28,7 +31,7 @@ object FFICenter {
     external fun registerMessageHandler(handler: Any)
 
     init {
-        System.loadLibrary("rust_library")
+        System.loadLibrary("megazord")
     }
 
     //声明静态方法 方法名字 test
