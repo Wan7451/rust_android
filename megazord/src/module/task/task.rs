@@ -10,6 +10,7 @@ use crate::module::net::Response;
 
 pub struct Task<'a> {
     chains: Vec<Arc<dyn Chain>>,
+    custom: Vec<Arc<dyn Chain>>,
     request: &'a Request,
 }
 
@@ -18,12 +19,13 @@ impl<'a> Task<'a> {
     pub fn new(request: &'a Request) -> Self {
         Task {
             chains: vec![Arc::new(LoggingInterceptor::new(Level::Error)), Arc::new(LastNode)],
+            custom: vec![],
             request,
         }
     }
 
     pub fn add_chain<T>(&mut self, chain: T) where T: Chain {
-        self.chains.push(Arc::new(chain));
+        self.custom.push(Arc::new(chain));
     }
 
     fn generate_request(&self) -> Result<RequestBuilder> {
@@ -32,10 +34,10 @@ impl<'a> Task<'a> {
         let headers = client.headers.clone().into();
         match request.request_type() {
             RequestType::Get => {
-                Ok(client.client.get(request.url()).headers(headers))
+                Ok(client.client.get(request.url()).headers(headers).json(&request.params()))
             }
             RequestType::Post => {
-                Ok(client.client.post(request.base_url()).headers(headers))
+                Ok(client.client.post(request.base_url()).headers(headers).json(&request.params()))
             }
             _ => {
                 Err(Error::CustomError(String::from("not support")))
@@ -44,6 +46,7 @@ impl<'a> Task<'a> {
     }
 
     pub async fn run(&mut self) -> BoxFuture<Result<Response>> {
+        self.custom.extend(self.chains.clone());
         if let Some((curr, next)) = self.chains.split_first() {
             if let Ok(request) = self.generate_request() {
                 Box::pin(curr.process(request, next))

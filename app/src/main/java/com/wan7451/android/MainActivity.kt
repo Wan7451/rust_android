@@ -23,7 +23,7 @@ class MainActivity : AppCompatActivity() {
         BridgeFFi.initHttpClient("https://www.wanandroid.com", headers.toString())
 
 
-        BridgeFFi.sendRequest("https://www.wanandroid.com", "/article/list/0/json", "{}")
+        BridgeFFi.sendRequest("https://www.wanandroid.com", "/article/list/0/json", headers.toString())
 
     }
 }

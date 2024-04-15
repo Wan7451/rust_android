@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use serde_json::Value;
+use serde_json::{json, Value};
 
 use crate::module::{get_runtime, Task};
 use crate::module::error::Error;
@@ -105,6 +105,14 @@ impl Request {
 
     pub fn base_url(&self) -> String {
         self.base_url.clone()
+    }
+
+    pub fn params(&self) -> Value {
+        let mut params = json!({});
+        for (key, value) in &self.params {
+            params[key] = json!(value);
+        }
+        params
     }
 
     pub fn request_type(&self) -> RequestType {

@@ -53,6 +53,15 @@ impl Chain for LoggingInterceptor {
     }
 }
 
+pub struct JsonInterceptor;
+
+// #[async_trait]
+// impl Chain for JsonInterceptor {
+//     async fn process(&self, request: RequestBuilder, chains: &[Arc<dyn Chain>]) -> Result<Response> {
+//     }
+// }
+
+
 pub struct LastNode;
 
 #[async_trait]
